@@ -321,7 +321,7 @@ class Chef
       def chef_version
         # Memoize the version to avoid multiple SSH calls
         @chef_version ||= lambda do
-          cmd = %q{sudo chef-solo --version 2>/dev/null | awk '$1 == "Chef:" {print $2}'}
+          cmd = %q{sudo chef-solo --version 2>/dev/null | awk -F ": " '/Chef/{print $2}'}
           run_command(cmd).stdout.strip
         end.call
       end
@@ -332,6 +332,7 @@ class Chef
         cmd << " -N #{config[:chef_node_name]}" if config[:chef_node_name]
         cmd << " -W" if config[:why_run]
         cmd << " -o #{config[:override_runlist]}" if config[:override_runlist]
+        cmd << " --chef-license accept-silent" # > chef-15 needs license agreements that can be silently accepted
         if Gem::Version.new(::Chef::VERSION) >= Gem::Version.new("12.10.54")
           cmd << " --legacy-mode" if config[:legacy_mode]
         end
